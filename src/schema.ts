@@ -33,12 +33,12 @@ function checkRepository(problems: Problem[], path: string, r: unknown): void {
     const id = repo.identity as Record<string, unknown>;
     expect(problems, `${path}.identity.emails`, Array.isArray(id.emails), "array");
     expect(problems, `${path}.identity.names`, Array.isArray(id.names), "array");
-    expect(problems, `${path}.identity.count`, typeof id.count === "number", "number");
+    expect(problems, `${path}.identity.count`, typeof id.count === "number" && Number.isFinite(id.count), "number");
     if (id.possiblySplit !== undefined && expect(problems, `${path}.identity.possiblySplit`, isObject(id.possiblySplit), "object")) {
       const ps = id.possiblySplit as Record<string, unknown>;
       expect(problems, `${path}.identity.possiblySplit.names`, Array.isArray(ps.names), "array");
       expect(problems, `${path}.identity.possiblySplit.reasons`, Array.isArray(ps.reasons), "array");
-      if (ps.count !== undefined) expect(problems, `${path}.identity.possiblySplit.count`, typeof ps.count === "number", "number");
+      if (ps.count !== undefined) expect(problems, `${path}.identity.possiblySplit.count`, typeof ps.count === "number" && Number.isFinite(ps.count), "number");
       if (ps.hint !== undefined) expect(problems, `${path}.identity.possiblySplit.hint`, typeof ps.hint === "string", "string");
       if (ps.emails !== undefined) expect(problems, `${path}.identity.possiblySplit.emails`, Array.isArray(ps.emails), "array");
     }
@@ -50,9 +50,9 @@ function checkRepository(problems: Problem[], path: string, r: unknown): void {
   }
   if (expect(problems, `${path}.excluded`, isObject(repo.excluded), "object")) {
     const ex = repo.excluded as Record<string, unknown>;
-    expect(problems, `${path}.excluded.botCommits`, typeof ex.botCommits === "number", "number");
-    expect(problems, `${path}.excluded.files`, typeof ex.files === "number", "number");
-    expect(problems, `${path}.excluded.linesAddedShare`, typeof ex.linesAddedShare === "number", "number");
+    expect(problems, `${path}.excluded.botCommits`, typeof ex.botCommits === "number" && Number.isFinite(ex.botCommits), "number");
+    expect(problems, `${path}.excluded.files`, typeof ex.files === "number" && Number.isFinite(ex.files), "number");
+    expect(problems, `${path}.excluded.linesAddedShare`, typeof ex.linesAddedShare === "number" && Number.isFinite(ex.linesAddedShare), "number");
   }
   if (expect(problems, `${path}.figures`, Array.isArray(repo.figures) && (repo.figures as unknown[]).length > 0, "non-empty array")) {
     (repo.figures as unknown[]).forEach((f, i) => checkFigure(problems, `${path}.figures[${i}]`, f));
