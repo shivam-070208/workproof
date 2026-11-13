@@ -1,11 +1,12 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { rm, writeFile, readFile, mkdir } from "node:fs/promises";
+import { rm, writeFile, readFile, mkdir, mkdtemp } from "node:fs/promises";
 import { createServer } from "node:http";
 import { join } from "node:path";
-import { execFileSync } from "node:child_process";
+import { execFileSync, spawnSync } from "node:child_process";
 import { makeRepo } from "./fixture.js";
 import { analyseRepo, buildReport, verifyReport, narrate, renderMarkdown, badgeFor, cardFor } from "../src/index.js";
+import { tmpdir } from "node:os";
 
 const params = { author: ["ada@example.com"], depth: 2, threshold: 0.5, minCommits: 1, paths: false, emails: false, sample: 1 };
 
@@ -298,4 +299,29 @@ test("card rejects reports with multiple repositories", () => {
     () => cardFor(report),
     /--card supports only one repository/,
   );
+});
+
+test("CLI check rejects malformed JSON without crashing", async () => {
+  const dir = await mkdtemp(join(tmpdir(), "workproof-fuzz-"));
+  const reportPath = join(dir, "report.json");
+
+  try {
+    await writeFile(reportPath, '{"schemaVersion":');
+
+    const result = spawnSync(
+      process.execPath,
+      ["dist/src/cli.js", "check", reportPath],
+      {
+        encoding: "utf8",
+        timeout: 5000,
+      },
+    );
+
+    assert.notEqual(result.status, 0);
+    assert.equal(result.signal, null);
+    assert.doesNotMatch(result.stderr, /uncaught exception/i);
+    assert.match(result.stderr, /json|parse|syntax|invalid/i);
+  } finally {
+    await rm(dir, { recursive: true, force: true });
+  }
 });
